@@ -1,0 +1,61 @@
+<div class="heading">
+    <div>
+        <div class="paraHeading">Welcome to <b>Pules</b> <sub class="paraText">TM</sub></div>
+        <div><b>P</b>ules harnesses the power of artificial to drive business growth, Improve customer exprience,
+            and enhance operation efficency, enhance customer exprience, and boost efficency.</div>
+    </div>
+    <div class="usecase">
+        <div class="card">
+            <div class="cardHading">
+                <span>Use Cases</span>
+                <div class="cardButton">
+                    <button class="cardButton1" (click)="scrollLeft()">←</button>
+                    <button class="cardButton1" (click)="scrollRight()">→</button>
+                </div>
+            </div>
+            <div class="scroll-container" #scrollContainer>
+                <div class="content">
+                    <div class="item" *ngFor="let item of items">
+                        <div class="cardItem">{{item.cardHead}}</div>
+                        <div class="cardItem cardInHeading">{{item.CardTitle}}</div>
+                        <div class="cardItem">{{item.cardDes}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Our Model -->
+    <div class="ourModelCard">
+        <div class="usecase">
+            <div class="card">
+                <div class="cardHading">
+                    <span>Our Models</span>
+                    <div class="cardButton">
+                        <button class="cardButton2" (click)="scrollLeftt()">←</button>
+                        <button class="cardButton2" (click)="scrollRightt()">→</button>
+                    </div>
+                </div>
+                <div class="scroll-container" #scrollContainert>
+                    <div class="content">
+                        <div class="item" *ngFor="let item of items">
+                            <div class="cardItem">{{item.cardHead}}</div>
+                            <div class="cardItem cardInHeading">{{item.CardTitle}}</div>
+                            <div class="cardItem">{{item.cardDes}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashDescion">
+        <div class="dashDescionTitle">Get Started with Pulse <sub>TM</sub></div>
+        <div class = "dashDescionDesc">
+            Lorem ipsum dolor sit amet, consectetur adipicing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore manga aliqua.
+        </div>
+        <div>
+            <button class = "dashDescionBtn">GET START</button>
+        </div>
+    </div>
+</div>
