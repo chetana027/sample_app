@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: my-app
-          image: chetanap911/myapp:v2
+          image: chetanap911/myapp:latest
           ports:
             - containerPort: 3000
