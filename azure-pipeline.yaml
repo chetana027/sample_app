@@ -1,0 +1,42 @@
+trigger:
+- main  # Runs pipeline when code is pushed to main branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerRegistryServiceConnection: '<DOCKER_REGISTRY_SERVICE_CONNECTION>'  # Replace with your Docker Registry connection
+  imageName: '<your-dockerhub-username>/my-python-app'
+  tag: $(Build.BuildId)  # Auto-generates a unique tag for each build
+
+steps:
+- task: Docker@2
+  displayName: 'Build and Tag Docker Image'
+  inputs:
+    command: 'build'
+    Dockerfile: 'Dockerfile'   # Uses your Dockerfile
+    repository: $(imageName)   # Automatically tags the image
+    tags: '$(tag)'
+
+- task: Docker@2
+  displayName: 'Push Docker Image to Registry'
+  inputs:
+    command: 'push'
+    repository: $(imageName)
+    tags: '$(tag)'
+
+- script: |
+    echo "Updating Kubernetes YAML with new image tag"
+    sed -i 's|image: .*|image: $(imageName):$(tag)|' k8s/deployment.yaml
+  displayName: 'Update Kubernetes Deployment YAML'
+
+- task: Bash@3
+  displayName: 'Commit & Push Updated YAML to GitHub'
+  inputs:
+    targetType: 'inline'
+    script: |
+      git config --global user.email "your-email@example.com"
+      git config --global user.name "Azure DevOps"
+      git add k8s/deployment.yaml
+      git commit -m "Update deployment image to $(tag)"
+      git push origin main
