@@ -1,35 +1,50 @@
 trigger:
-- main  # Runs pipeline when code is pushed to main branch
+- main  # Run pipeline when code is pushed to the main branch
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  dockerRegistryServiceConnection: '<DOCKER_REGISTRY_SERVICE_CONNECTION>'  # Replace with your Docker Registry connection
-  imageName: '<your-dockerhub-username>/my-python-app'
-  tag: $(Build.BuildId)  # Auto-generates a unique tag for each build
+  AWS_REGION: 'us-east-1'  # Replace with your AWS region
+  AWS_ACCOUNT_ID: '123456789012'  # Replace with your AWS Account ID
+  ECR_REPOSITORY: 'my-python-app'  # Name of the ECR repository
+  IMAGE_TAG: $(Build.BuildId)  # Auto-generate tag based on Build ID
+  ECR_REGISTRY: '$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com'  # Full ECR registry URL
+  IMAGE_NAME: '$(ECR_REGISTRY)/$(ECR_REPOSITORY)'  # Full Image name with ECR
 
 steps:
+# 1️⃣ **Login to AWS ECR**
+- task: Bash@3
+  displayName: 'Login to Amazon ECR'
+  inputs:
+    targetType: 'inline'
+    script: |
+      aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+
+# 2️⃣ **Build the Docker image**
 - task: Docker@2
-  displayName: 'Build and Tag Docker Image'
+  displayName: 'Build Docker Image'
   inputs:
     command: 'build'
-    Dockerfile: 'Dockerfile'   # Uses your Dockerfile
-    repository: $(imageName)   # Automatically tags the image
-    tags: '$(tag)'
+    Dockerfile: 'Dockerfile'
+    repository: $(IMAGE_NAME)
+    tags: '$(IMAGE_TAG)'
 
+# 3️⃣ **Push the Docker image to Amazon ECR**
 - task: Docker@2
-  displayName: 'Push Docker Image to Registry'
+  displayName: 'Push Docker Image to Amazon ECR'
   inputs:
     command: 'push'
-    repository: $(imageName)
-    tags: '$(tag)'
+    repository: $(IMAGE_NAME)
+    tags: '$(IMAGE_TAG)'
 
+# 4️⃣ **Update Kubernetes deployment.yaml with new image tag**
 - script: |
-    echo "Updating Kubernetes YAML with new image tag"
-    sed -i 's|image: .*|image: $(imageName):$(tag)|' k8s/deployment.yaml
+    echo "Updating Kubernetes deployment file with new image tag"
+    sed -i 's|image: .*|image: $(IMAGE_NAME):$(IMAGE_TAG)|' k8s/deployment.yaml
   displayName: 'Update Kubernetes Deployment YAML'
 
+# 5️⃣ **Commit & Push Updated Deployment YAML (Triggers Argo CD Auto-Deploy)**
 - task: Bash@3
   displayName: 'Commit & Push Updated YAML to GitHub'
   inputs:
@@ -38,5 +53,5 @@ steps:
       git config --global user.email "your-email@example.com"
       git config --global user.name "Azure DevOps"
       git add k8s/deployment.yaml
-      git commit -m "Update deployment image to $(tag)"
+      git commit -m "Update deployment image to $(IMAGE_TAG)"
       git push origin main
