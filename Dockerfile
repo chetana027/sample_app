@@ -1,25 +1,21 @@
-# Use the official Node.js image
-FROM node:18 AS build
- 
-# Set the working directory
+# Build Stage
+FROM node:18 AS builder
 WORKDIR /app
- 
+
 # Copy package.json and install dependencies
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm install
- 
-# Copy the rest of the application
+
+# Copy source files and build Angular
 COPY . .
- 
-# Build the Angular app
-RUN npm run build -- --configuration=production
- 
-# Use Nginx to serve the Angular app
+RUN npm run build --prod
+
+# Nginx Stage
 FROM nginx:alpine
-COPY --from=build /app/dist/gen-ai /usr/share/nginx/html
- 
-# Expose port 80
-EXPOSE 8080
- 
+COPY --from=builder /app/dist/my-angular-app /usr/share/nginx/html
+
+# Expose port 80 for web traffic
+EXPOSE 80
+
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
