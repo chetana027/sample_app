@@ -12,7 +12,7 @@ RUN npm run build --prod
 
 # Nginx Stage
 FROM nginx:alpine
-COPY --from=builder /app/dist/my-angular-app /usr/share/nginx/html
+COPY --from=build /app/dist/gen-ai /usr/share/nginx/html
 
 # Expose port 80 for web traffic
 EXPOSE 80
