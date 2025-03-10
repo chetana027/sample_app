@@ -1,18 +1,25 @@
-# Use an official Python image
-FROM python:3.9
-
-# Set the working directory inside the container
+# Use the official Node.js image
+FROM node:18 AS build
+ 
+# Set the working directory
 WORKDIR /app
-
-# Copy the requirements file and install dependencies
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-# Copy the rest of the application code
+ 
+# Copy package.json and install dependencies
+COPY package.json package-lock.json ./
+RUN npm install
+ 
+# Copy the rest of the application
 COPY . .
-
-# Expose the application port
-EXPOSE 5000
-
-# Command to run the app
-CMD ["python", "app.py"]
+ 
+# Build the Angular app
+RUN npm run build -- --configuration=production
+ 
+# Use Nginx to serve the Angular app
+FROM nginx:alpine
+COPY --from=build /app/dist/gen-ai /usr/share/nginx/html
+ 
+# Expose port 80
+EXPOSE 8080
+ 
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
