@@ -8,11 +8,12 @@ RUN npm install
 
 # Copy source files and build Angular
 COPY . .
-RUN npm run build --prod
+# RUN npm run build --prod
+RUN npm run build --configuration=production
 
 # Nginx Stage
 FROM nginx:alpine
-COPY --from=build /app/dist/gen-ai /usr/share/nginx/html
+COPY --from=builder /app/dist/gen-ai /usr/share/nginx/html
 
 # Expose port 80 for web traffic
 EXPOSE 80
