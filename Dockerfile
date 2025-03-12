@@ -14,6 +14,7 @@ RUN npm run build --configuration=production
 # Nginx Stage
 FROM nginx:alpine
 COPY --from=builder /app/dist/gen-ai /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80 for web traffic
 EXPOSE 80
