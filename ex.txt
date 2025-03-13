@@ -1,0 +1,97 @@
+To build a Docker image for an Angular app using Nginx in an **Azure DevOps pipeline**, follow these steps:
+
+---
+
+### **1. Dockerfile for Angular with Nginx**
+Create a `Dockerfile` in your Angular project root:
+
+```dockerfile
+# Step 1: Build Angular App
+FROM node:18 AS build-stage
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+RUN npm run build --prod
+
+# Step 2: Serve with Nginx
+FROM nginx:latest AS production-stage
+COPY --from=build-stage /app/dist/your-angular-app /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+Replace `your-angular-app` with your actual Angular project name inside `dist/`.
+
+---
+
+### **2. Nginx Configuration**
+Create `nginx.conf` in the project root:
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    location / {
+        try_files $uri /index.html;
+    }
+}
+```
+
+---
+
+### **3. Azure DevOps Pipeline (`azure-pipelines.yml`)**
+Add the following YAML file to your repository:
+
+```yaml
+trigger:
+- main  # Change to your branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+
+- script: |
+    npm install
+    npm run build --prod
+  displayName: 'Build Angular App'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'your-azure-container-registry'  # Change this to your Azure DevOps Docker registry service connection
+    repository: 'your-repo-name'  # Change this to your repository name in ACR/ECR
+    command: 'buildAndPush'
+    Dockerfile: 'Dockerfile'
+    tags: 'latest'
+```
+---
+
+### **4. Push Docker Image to AWS ECR**
+Since you are using **AWS ECR**, add the following step after building the image:
+
+```yaml
+- script: |
+    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
+    docker tag your-repo-name:latest <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/your-repo-name:latest
+    docker push <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/your-repo-name:latest
+  displayName: 'Push to AWS ECR'
+```
+Replace `<aws-account-id>` and `<region>` with your AWS details.
+
+---
+
+### **Summary**
+1. **Dockerfile**: Defines how to build the Angular app and serve it with Nginx.
+2. **nginx.conf**: Configures Nginx to serve Angular.
+3. **Azure Pipeline**:
+   - Installs dependencies.
+   - Builds the Angular app.
+   - Builds and pushes the Docker image to **AWS ECR**.
+
+This setup will create an Angular **Docker image** and push it to **AWS ECR** using **Azure DevOps**. 🚀
