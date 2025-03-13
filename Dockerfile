@@ -9,6 +9,7 @@ RUN npm install
 # Copy source files and build Angular
 COPY . .
 # RUN npm run build --prod
+# comment
 RUN npm run build --configuration=production
 
 # Nginx Stage
